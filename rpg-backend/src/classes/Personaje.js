@@ -7,7 +7,7 @@ const BONUS_ESPECIE = {
 }
 
 const BONUS_CATEGORIA = {
-  guerrero:   { vida: 25,  ataque: 13, defensa: 7,  iniciativa: 0  },
+  guerrero:   { vida: 30,  ataque: 15, defensa: 10,  iniciativa: 0  },
   explorador: { vida: 10,  ataque: 10, defensa: 5,  iniciativa: 15 },
   mago:       { vida: -10, ataque: 25, defensa: -5, iniciativa: 5  }
 }
