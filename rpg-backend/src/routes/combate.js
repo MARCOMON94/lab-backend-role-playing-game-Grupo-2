@@ -4,7 +4,7 @@ const ctrl = require("../controllers/combateController");
 
 const router = Router();
 
-router.get("/", ctrl.listar);
+router.get("/historial", ctrl.listar);
 router.post("/", validar(["id1", "id2"]), ctrl.simular);
 
 module.exports = router;
