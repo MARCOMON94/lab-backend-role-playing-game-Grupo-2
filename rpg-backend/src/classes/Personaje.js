@@ -2,14 +2,14 @@ const BasePersonaje = require("./BasePersonaje")
 
 const BONUS_ESPECIE = {
   humano:  { vida: 0,   ataque: 0,  defensa: 0,  iniciativa: 5  },
-  enano:   { vida: 20,  ataque: 5,  defensa: 10, iniciativa: -5 },
+  enano:   { vida: 10,  ataque: 5,  defensa: 10, iniciativa: -5 },
   elfo:    { vida: -10, ataque: 10, defensa: -5, iniciativa: 10 }
 }
 
 const BONUS_CATEGORIA = {
-  guerrero:   { vida: 30,  ataque: 15, defensa: 10,  iniciativa: 0  },
+  guerrero:   { vida: 25,  ataque: 15, defensa: 10,  iniciativa: 0  },
   explorador: { vida: 10,  ataque: 10, defensa: 5,  iniciativa: 15 },
-  mago:       { vida: -10, ataque: 25, defensa: -5, iniciativa: 5  }
+  mago:       { vida: -5, ataque: 25, defensa: -5, iniciativa: 5  }
 }
 
 /**
