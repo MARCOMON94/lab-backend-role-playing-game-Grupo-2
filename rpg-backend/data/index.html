@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chronicles of Iron — RPG</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #c9a84c; --gold-light: #f0d080; --dark: #0d0a05;
+      --dark2: #1a1208; --parchment: #f5e6c8; --blood: #8b1a1a;
+    }
+    body {
+      background: var(--dark); font-family: 'Crimson Text', serif;
+      color: var(--parchment); min-height: 100vh;
+      background-image: radial-gradient(ellipse at 20% 20%, rgba(139,26,26,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(201,168,76,0.05) 0%, transparent 60%);
+    }
+    header { text-align: center; padding: 40px 20px 20px; }
+    header::after {
+      content: ''; display: block; width: 60%; max-width: 400px;
+      height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 16px auto 0; opacity: 0.4;
+    }
+    h1 { font-family: 'Cinzel', serif; font-size: clamp(24px, 5vw, 42px); color: var(--gold); letter-spacing: 6px; text-shadow: 0 0 30px rgba(201,168,76,0.3); font-weight: 700; }
+    .subtitle { font-size: 12px; color: rgba(201,168,76,0.4); letter-spacing: 8px; margin-top: 6px; font-style: italic; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .tabs { display: flex; justify-content: center; gap: 4px; margin-bottom: 28px; }
+    .tab { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 3px; padding: 10px 24px; border: 1px solid rgba(201,168,76,0.25); background: transparent; color: rgba(201,168,76,0.4); cursor: pointer; transition: all 0.3s; border-radius: 2px; }
+    .tab.active { background: rgba(201,168,76,0.12); color: var(--gold); border-color: var(--gold); }
+    .tab:hover { color: var(--gold); border-color: rgba(201,168,76,0.5); }
+    .section { display: none; } .section.active { display: block; }
+    .chars-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .char-card { background: rgba(26,18,8,0.85); border: 1px solid rgba(201,168,76,0.15); border-radius: 4px; padding: 14px; position: relative; overflow: hidden; transition: all 0.3s; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .char-card:hover { border-color: rgba(201,168,76,0.4); transform: translateY(-2px); }
+    .char-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+    .char-card.guerrero::before { background: linear-gradient(90deg, transparent, #e74c3c, transparent); }
+    .char-card.mago::before { background: linear-gradient(90deg, transparent, #9b59b6, transparent); }
+    .char-card.explorador::before { background: linear-gradient(90deg, transparent, #27ae60, transparent); }
+    .char-name { font-family: 'Cinzel', serif; font-size: 14px; color: var(--gold); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .char-meta { font-size: 11px; color: rgba(245,230,200,0.4); margin-bottom: 10px; font-style: italic; }
+    .char-sprite { display: flex; justify-content: center; margin: 6px 0 10px; }
+    .stats-mini { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 8px; }
+    .stat-mini { text-align: center; background: rgba(0,0,0,0.25); padding: 4px 2px; border-radius: 2px; }
+    .stat-mini-val { font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold); display: block; }
+    .stat-mini-label { font-size: 8px; color: rgba(245,230,200,0.3); letter-spacing: 1px; }
+    .record { font-size: 9px; color: rgba(201,168,76,0.3); letter-spacing: 1px; font-family: 'Cinzel', serif; margin-top: 8px; text-align: center; }
+    .delete-btn { position: absolute; top: 8px; right: 8px; background: rgba(139,26,26,0.3); border: 1px solid rgba(139,26,26,0.3); color: #e07070; font-size: 10px; width: 20px; height: 20px; border-radius: 2px; cursor: pointer; opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; }
+    .char-card:hover .delete-btn { opacity: 1; }
+    .badge { display: inline-block; font-size: 9px; letter-spacing: 1px; padding: 2px 7px; border-radius: 2px; font-family: 'Cinzel', serif; margin-right: 3px; }
+    .badge.humano    { background: rgba(150,120,80,0.15); color: #c8a96e; border: 1px solid rgba(150,120,80,0.25); }
+    .badge.enano     { background: rgba(100,80,60,0.15);  color: #b8956a; border: 1px solid rgba(100,80,60,0.25); }
+    .badge.elfo      { background: rgba(80,120,80,0.15);  color: #8bc48a; border: 1px solid rgba(80,120,80,0.25); }
+    .badge.guerrero  { background: rgba(139,26,26,0.15); color: #e07070; border: 1px solid rgba(139,26,26,0.25); }
+    .badge.mago      { background: rgba(80,40,120,0.15); color: #b090e0; border: 1px solid rgba(80,40,120,0.25); }
+    .badge.explorador{ background: rgba(26,58,26,0.15);  color: #70c070; border: 1px solid rgba(26,58,26,0.25); }
+    .empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: rgba(201,168,76,0.2); font-style: italic; border: 1px dashed rgba(201,168,76,0.1); border-radius: 4px; }
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 2px; padding: 11px 16px; border: 1px solid; cursor: pointer; transition: all 0.3s; border-radius: 2px; width: 100%; }
+    .btn-gold { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.35); color: var(--gold); }
+    .btn-gold:hover { background: rgba(201,168,76,0.18); border-color: var(--gold); }
+    .btn-ghost { background: transparent; border-color: rgba(245,230,200,0.12); color: rgba(245,230,200,0.35); }
+    .btn-ghost:hover { border-color: rgba(245,230,200,0.3); color: rgba(245,230,200,0.6); }
+    .btn-combat { background: linear-gradient(135deg, rgba(139,26,26,0.25), rgba(201,168,76,0.08)); border-color: rgba(201,168,76,0.4); color: var(--gold); font-size: 12px; padding: 14px; letter-spacing: 4px; width: 100%; }
+    .btn-combat:hover { background: linear-gradient(135deg, rgba(139,26,26,0.4), rgba(201,168,76,0.15)); }
+    .form-panel { background: rgba(26,18,8,0.7); border: 1px solid rgba(201,168,76,0.15); border-radius: 4px; padding: 24px; max-width: 520px; margin: 0 auto 20px; }
+    .form-title { font-family: 'Cinzel', serif; font-size: 11px; color: rgba(201,168,76,0.5); letter-spacing: 4px; margin-bottom: 18px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1/-1; }
+    label { font-size: 9px; color: rgba(201,168,76,0.45); letter-spacing: 2px; font-family: 'Cinzel', serif; }
+    input[type=text], select { background: rgba(0,0,0,0.4); border: 1px solid rgba(201,168,76,0.18); color: var(--parchment); padding: 9px 12px; font-family: 'Crimson Text', serif; font-size: 15px; border-radius: 2px; width: 100%; outline: none; transition: border 0.3s; }
+    input[type=text]:focus, select:focus { border-color: rgba(201,168,76,0.45); }
+    select option { background: #1a1208; }
+    .stat-preview { background: rgba(0,0,0,0.25); border: 1px solid rgba(201,168,76,0.08); border-radius: 3px; padding: 12px; margin: 10px 0 16px; }
+    .stat-bar { margin-bottom: 6px; }
+    .stat-bar-label { display: flex; justify-content: space-between; font-size: 10px; color: rgba(245,230,200,0.4); letter-spacing: 1px; margin-bottom: 3px; }
+    .stat-track { height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+    .stat-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+    .stat-fill.vida       { background: linear-gradient(90deg, #1a6b3a, #27ae60); }
+    .stat-fill.ataque     { background: linear-gradient(90deg, #7b1a1a, #c0392b); }
+    .stat-fill.defensa    { background: linear-gradient(90deg, #1a3a5c, #2471a3); }
+    .stat-fill.iniciativa { background: linear-gradient(90deg, #6b5a1a, #d4ac0d); }
+    .combat-panel { background: rgba(26,18,8,0.7); border: 1px solid rgba(201,168,76,0.15); border-radius: 4px; padding: 24px; max-width: 700px; margin: 0 auto 16px; }
+    .vs-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: start; margin-bottom: 20px; }
+    .vs-label { font-family: 'Cinzel', serif; font-size: 22px; color: var(--blood); text-align: center; padding-top: 28px; text-shadow: 0 0 12px rgba(139,26,26,0.5); }
+    .fighter-select { background: rgba(0,0,0,0.4); border: 1px solid rgba(201,168,76,0.18); color: var(--parchment); padding: 9px 12px; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 1px; border-radius: 2px; width: 100%; outline: none; }
+    .fighter-preview { text-align: center; min-height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
+    .fighter-name { font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold); margin-top: 4px; }
+    .hp-row { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .hp-wrap { height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; }
+    .hp-bar { height: 100%; border-radius: 4px; transition: width 0.6s ease; background: linear-gradient(90deg, #1e8449, #27ae60); }
+    .hp-center { font-family: 'Cinzel', serif; font-size: 9px; color: rgba(201,168,76,0.4); text-align: center; }
+    .hp-name { font-family: 'Cinzel', serif; font-size: 10px; color: rgba(201,168,76,0.6); margin-bottom: 4px; }
+    .log-box { background: rgba(0,0,0,0.5); border: 1px solid rgba(201,168,76,0.08); border-radius: 3px; padding: 12px; max-height: 220px; overflow-y: auto; font-size: 13px; line-height: 1.9; }
+    .log-box::-webkit-scrollbar { width: 3px; }
+    .log-box::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.25); border-radius: 2px; }
+    .log-line { padding: 1px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .log-line.info { color: rgba(245,230,200,0.35); }
+    .log-line.dmg  { color: rgba(231,76,60,0.75); }
+    .log-line.win  { color: var(--gold-light); font-size: 15px; font-weight: 600; }
+    .winner-banner { text-align: center; padding: 16px; background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.25); border-radius: 4px; margin-top: 14px; animation: fadeIn 0.6s ease; }
+    .winner-name { font-family: 'Cinzel', serif; font-size: 20px; color: var(--gold); letter-spacing: 4px; margin-top: 6px; }
+    .winner-sub { font-size: 11px; color: rgba(201,168,76,0.4); letter-spacing: 3px; font-style: italic; margin-top: 4px; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(26,18,8,0.97); border: 1px solid rgba(201,168,76,0.35); color: var(--gold); font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 2px; padding: 10px 24px; border-radius: 2px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+    .toast.show { opacity: 1; }
+    .divider { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent); margin: 20px 0; }
+    .count-badge { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.25); border-radius: 50%; font-size: 9px; color: var(--gold); margin-left: 6px; font-family: 'Cinzel', serif; }
+    @media (max-width:600px) { .vs-row{grid-template-columns:1fr} .vs-label{padding-top:0} .form-row{grid-template-columns:1fr} .btn-row{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+<header>
+  <h1>⚔ CHRONICLES OF IRON ⚔</h1>
+  <p class="subtitle">RPG · FORJA TU DESTINO</p>
+</header>
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('roster')">HÉROES <span class="count-badge" id="count">0</span></button>
+    <button class="tab" onclick="switchTab('crear')">CREAR</button>
+    <button class="tab" onclick="switchTab('combate')">ARENA</button>
+  </div>
+
+  <div id="sec-roster" class="section active">
+    <div id="chars-grid" class="chars-grid"></div>
+    <div class="divider"></div>
+    <div class="btn-row" style="max-width:400px;margin:0 auto">
+      <button class="btn btn-ghost" onclick="switchTab('crear')">+ NUEVO HÉROE</button>
+      <button class="btn btn-ghost" onclick="crearAleatorio()">⚄ ALEATORIO</button>
+    </div>
+  </div>
+
+  <div id="sec-crear" class="section">
+    <div class="form-panel">
+      <div class="form-title">REGISTRO DE HÉROE</div>
+      <div class="form-row">
+        <div class="form-group full">
+          <label>NOMBRE</label>
+          <input type="text" id="inp-nombre" placeholder="Escribe un nombre legendario...">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ESPECIE</label>
+          <select id="inp-especie" onchange="actualizarPreview()">
+            <option value="humano">Humano</option>
+            <option value="enano">Enano</option>
+            <option value="elfo">Elfo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>CATEGORÍA</label>
+          <select id="inp-cat" onchange="actualizarPreview()">
+            <option value="guerrero">Guerrero</option>
+            <option value="explorador">Explorador</option>
+            <option value="mago">Mago</option>
+          </select>
+        </div>
+      </div>
+      <div class="stat-preview" id="stat-preview"></div>
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="crearManual()">⚔ FORJAR HÉROE</button>
+        <button class="btn btn-ghost" onclick="aleatorioEnFormulario()">⚄ ALEATORIZAR TODO</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="sec-combate" class="section">
+    <div class="combat-panel">
+      <div class="vs-row">
+        <div>
+          <label style="font-size:9px;color:rgba(201,168,76,0.4);letter-spacing:2px;font-family:'Cinzel',serif">PRIMER COMBATIENTE</label>
+          <select class="fighter-select" id="sel-p1" onchange="actualizarPreviews()"></select>
+          <div class="fighter-preview" id="prev-p1"><span style="color:rgba(201,168,76,0.2);font-size:12px;font-style:italic">— elige héroe —</span></div>
+        </div>
+        <div class="vs-label">VS</div>
+        <div>
+          <label style="font-size:9px;color:rgba(201,168,76,0.4);letter-spacing:2px;font-family:'Cinzel',serif">SEGUNDO COMBATIENTE</label>
+          <select class="fighter-select" id="sel-p2" onchange="actualizarPreviews()"></select>
+          <div class="fighter-preview" id="prev-p2"><span style="color:rgba(201,168,76,0.2);font-size:12px;font-style:italic">— elige héroe —</span></div>
+        </div>
+      </div>
+      <button class="btn btn-combat" onclick="iniciarCombate()">⚔ &nbsp; COMENZAR BATALLA &nbsp; ⚔</button>
+    </div>
+    <div id="battle-area" style="display:none">
+      <div class="combat-panel">
+        <div id="battle-hp"></div>
+        <div class="log-box" id="battle-log"></div>
+        <div id="winner-area"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const BONUS_ESPECIE={humano:{vida:0,ataque:0,defensa:0,iniciativa:5},enano:{vida:20,ataque:5,defensa:10,iniciativa:-5},elfo:{vida:-10,ataque:10,defensa:-5,iniciativa:10}}
+const BONUS_CAT={guerrero:{vida:30,ataque:15,defensa:10,iniciativa:0},explorador:{vida:10,ataque:10,defensa:5,iniciativa:15},mago:{vida:-10,ataque:25,defensa:-5,iniciativa:5}}
+const NOMBRES={humano:['Aldric','Mara','Torben','Elisa','Cain','Sera'],enano:['Durgin','Broka','Halvard','Ilda','Grimr','Vorna'],elfo:['Aelindra','Sorin','Lyshara','Eryn','Caladel','Nimue']}
+const ESPECIES=['humano','enano','elfo'], CATS=['guerrero','explorador','mago']
+let personajes=[], nextId=1
+
+function rnd(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function calcStats(esp,cat){
+  const b={vida:100,ataque:10,defensa:5,iniciativa:5},be=BONUS_ESPECIE[esp]||{},bc=BONUS_CAT[cat]||{}
+  return{vida:b.vida+(be.vida||0)+(bc.vida||0),ataque:b.ataque+(be.ataque||0)+(bc.ataque||0),defensa:b.defensa+(be.defensa||0)+(bc.defensa||0),iniciativa:b.iniciativa+(be.iniciativa||0)+(bc.iniciativa||0)}
+}
+
+function getSprite(especie,cat,size){
+  size=size||72
+  const h=Math.round(size*96/72)
+  const s={
+    'humano-guerrero':`<rect x="22" y="72" width="10" height="16" rx="5" fill="#c0392b"/><rect x="36" y="72" width="10" height="16" rx="5" fill="#c0392b"/><ellipse cx="27" cy="88" rx="7" ry="4" fill="#6b1a1a"/><ellipse cx="41" cy="88" rx="7" ry="4" fill="#6b1a1a"/><rect x="18" y="50" width="36" height="26" rx="8" fill="#e74c3c"/><rect x="28" y="52" width="16" height="10" rx="4" fill="#c0392b" opacity="0.6"/><rect x="8" y="52" width="12" height="20" rx="6" fill="#e74c3c"/><rect x="52" y="52" width="12" height="20" rx="6" fill="#e74c3c"/><circle cx="14" cy="73" r="5" fill="#d4a574"/><circle cx="58" cy="73" r="5" fill="#d4a574"/><rect x="60" y="36" width="4" height="28" rx="2" fill="#aaa"/><rect x="56" y="54" width="12" height="4" rx="2" fill="#888"/><rect x="61" y="30" width="2" height="8" rx="1" fill="#ddd"/><ellipse cx="36" cy="28" rx="22" ry="24" fill="#d4a574"/><ellipse cx="20" cy="34" rx="5" ry="3" fill="#e8967a" opacity="0.5"/><ellipse cx="52" cy="34" rx="5" ry="3" fill="#e8967a" opacity="0.5"/><ellipse cx="26" cy="28" rx="7" ry="8" fill="white"/><ellipse cx="46" cy="28" rx="7" ry="8" fill="white"/><ellipse cx="26" cy="30" rx="5" ry="6" fill="#3a1a08"/><ellipse cx="46" cy="30" rx="5" ry="6" fill="#3a1a08"/><ellipse cx="26" cy="29" rx="3" ry="4" fill="#7b3a10"/><ellipse cx="46" cy="29" rx="3" ry="4" fill="#7b3a10"/><circle cx="28" cy="27" r="2" fill="white"/><circle cx="48" cy="27" r="2" fill="white"/><path d="M20 20 Q26 17 32 20" stroke="#5a2a08" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M40 20 Q46 17 52 20" stroke="#5a2a08" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M29 39 Q36 44 43 39" stroke="#b07050" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M14 22 Q10 8 20 6 Q16 14 22 12 Q18 4 30 2 Q28 12 34 10 Q34 2 42 4 Q40 12 46 10 Q48 4 56 8 Q50 14 54 18 Q58 10 58 22" fill="#5a2a08"/><ellipse cx="36" cy="10" rx="18" ry="8" fill="#5a2a08"/>`,
+    'humano-mago':`<rect x="22" y="72" width="10" height="16" rx="5" fill="#7b3fb5"/><rect x="36" y="72" width="10" height="16" rx="5" fill="#7b3fb5"/><ellipse cx="27" cy="88" rx="7" ry="4" fill="#3a1a6b"/><ellipse cx="41" cy="88" rx="7" ry="4" fill="#3a1a6b"/><path d="M16 50 Q20 78 22 88 Q36 82 50 88 Q52 78 56 50Z" fill="#9b59b6" opacity="0.3"/><rect x="18" y="48" width="36" height="28" rx="10" fill="#9b59b6"/><rect x="8" y="50" width="12" height="22" rx="6" fill="#9b59b6"/><rect x="52" y="50" width="12" height="22" rx="6" fill="#9b59b6"/><circle cx="14" cy="73" r="5" fill="#f0c8d0"/><circle cx="58" cy="73" r="5" fill="#f0c8d0"/><rect x="61" y="30" width="3" height="44" rx="1.5" fill="#8b6914"/><circle cx="62" cy="28" r="8" fill="rgba(180,100,255,0.3)"/><circle cx="62" cy="28" r="5" fill="rgba(220,160,255,0.7)"/><circle cx="62" cy="28" r="2.5" fill="white"/><ellipse cx="36" cy="28" rx="22" ry="24" fill="#f0c8d0"/><ellipse cx="18" cy="34" rx="5" ry="3" fill="#e8967a" opacity="0.5"/><ellipse cx="54" cy="34" rx="5" ry="3" fill="#e8967a" opacity="0.5"/><ellipse cx="25" cy="28" rx="7" ry="8" fill="white"/><ellipse cx="47" cy="28" rx="7" ry="8" fill="white"/><ellipse cx="25" cy="30" rx="5" ry="6" fill="#5a1a8a"/><ellipse cx="47" cy="30" rx="5" ry="6" fill="#5a1a8a"/><ellipse cx="25" cy="29" rx="3" ry="4" fill="#8a3ab0"/><ellipse cx="47" cy="29" rx="3" ry="4" fill="#8a3ab0"/><circle cx="27" cy="27" r="2" fill="white"/><circle cx="49" cy="27" r="2" fill="white"/><path d="M19 20 Q25 17 31 20" stroke="#8a5a9a" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M41 20 Q47 17 53 20" stroke="#8a5a9a" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M29 39 Q36 44 43 39" stroke="#c080a0" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M14 18 Q8 6 16 2 Q20 14 24 10 Q20 2 30 0 Q30 10 36 8 Q42 10 42 0 Q52 2 48 10 Q52 14 56 2 Q64 6 58 18" fill="#d4a0c0"/><ellipse cx="36" cy="8" rx="20" ry="10" fill="#d4a0c0"/><path d="M14 18 Q6 40 10 60" stroke="#d4a0c0" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M58 18 Q66 40 62 60" stroke="#d4a0c0" stroke-width="6" fill="none" stroke-linecap="round"/><polygon points="36,0 22,16 50,16" fill="#5a2a8a"/><rect x="18" y="14" width="36" height="6" rx="3" fill="#7a3aaa"/><circle cx="36" cy="4" r="3" fill="#ffd700"/>`,
+    'humano-explorador':`<rect x="22" y="72" width="10" height="16" rx="5" fill="#1e8449"/><rect x="36" y="72" width="10" height="16" rx="5" fill="#1e8449"/><ellipse cx="27" cy="88" rx="7" ry="4" fill="#0a3a1a"/><ellipse cx="41" cy="88" rx="7" ry="4" fill="#0a3a1a"/><rect x="18" y="50" width="36" height="26" rx="8" fill="#27ae60"/><rect x="8" y="52" width="12" height="20" rx="6" fill="#27ae60"/><rect x="52" y="52" width="12" height="20" rx="6" fill="#27ae60"/><circle cx="14" cy="73" r="5" fill="#d4a574"/><circle cx="58" cy="73" r="5" fill="#d4a574"/><path d="M62 40 Q74 52 62 64" stroke="#8b6914" stroke-width="3" fill="none" stroke-linecap="round"/><line x1="62" y1="40" x2="62" y2="64" stroke="#ddd" stroke-width="1"/><line x1="58" y1="52" x2="74" y2="46" stroke="#8b6914" stroke-width="1.5"/><polygon points="74,46 70,48 71,44" fill="#8b6914"/><ellipse cx="36" cy="28" rx="22" ry="24" fill="#d4a574"/><ellipse cx="18" cy="34" rx="5" ry="3" fill="#e8967a" opacity="0.5"/><ellipse cx="54" cy="34" rx="5" ry="3" fill="#e8967a" opacity="0.5"/><ellipse cx="25" cy="28" rx="7" ry="8" fill="white"/><ellipse cx="47" cy="28" rx="7" ry="8" fill="white"/><ellipse cx="25" cy="30" rx="5" ry="6" fill="#2c5a1e"/><ellipse cx="47" cy="30" rx="5" ry="6" fill="#2c5a1e"/><ellipse cx="25" cy="29" rx="3" ry="4" fill="#4a8a30"/><ellipse cx="47" cy="29" rx="3" ry="4" fill="#4a8a30"/><circle cx="27" cy="27" r="2" fill="white"/><circle cx="49" cy="27" r="2" fill="white"/><path d="M19 20 Q25 17 31 20" stroke="#5a3a08" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M41 20 Q47 17 53 20" stroke="#5a3a08" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M29 39 Q36 44 43 39" stroke="#b07050" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M14 18 Q8 8 18 4 Q22 14 28 10 Q24 2 36 0 Q48 2 44 10 Q50 14 54 4 Q64 8 58 18" fill="#3a2008"/><ellipse cx="36" cy="8" rx="20" ry="10" fill="#3a2008"/><path d="M54 16 Q66 24 60 44" stroke="#3a2008" stroke-width="7" fill="none" stroke-linecap="round"/><rect x="14" y="20" width="44" height="6" rx="3" fill="#27ae60" opacity="0.8"/>`,
+    'enano-guerrero':`<rect x="23" y="74" width="11" height="12" rx="5" fill="#c0392b"/><rect x="37" y="74" width="11" height="12" rx="5" fill="#c0392b"/><ellipse cx="28" cy="86" rx="8" ry="5" fill="#4a1a0a"/><ellipse cx="43" cy="86" rx="8" ry="5" fill="#4a1a0a"/><rect x="14" y="50" width="44" height="28" rx="10" fill="#e74c3c"/><rect x="22" y="52" width="28" height="12" rx="5" fill="#c0392b" opacity="0.5"/><rect x="4" y="52" width="13" height="22" rx="6" fill="#e74c3c"/><rect x="55" y="52" width="13" height="22" rx="6" fill="#e74c3c"/><circle cx="10" cy="75" r="6" fill="#b07840"/><circle cx="62" cy="75" r="6" fill="#b07840"/><rect x="63" y="40" width="4" height="30" rx="2" fill="#6b4010"/><path d="M63 38 Q74 32 76 44 Q70 46 63 44Z" fill="#aaa"/><ellipse cx="36" cy="26" rx="24" ry="22" fill="#b07840"/><ellipse cx="16" cy="32" rx="6" ry="4" fill="#e8967a" opacity="0.5"/><ellipse cx="56" cy="32" rx="6" ry="4" fill="#e8967a" opacity="0.5"/><ellipse cx="24" cy="26" rx="7" ry="8" fill="white"/><ellipse cx="48" cy="26" rx="7" ry="8" fill="white"/><ellipse cx="24" cy="28" rx="5" ry="6" fill="#3a1a08"/><ellipse cx="48" cy="28" rx="5" ry="6" fill="#3a1a08"/><ellipse cx="24" cy="27" rx="3" ry="4" fill="#7a3010"/><ellipse cx="48" cy="27" rx="3" ry="4" fill="#7a3010"/><circle cx="26" cy="25" r="2" fill="white"/><circle cx="50" cy="25" r="2" fill="white"/><path d="M17 18 Q24 14 31 18" stroke="#3a1a08" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M41 18 Q48 14 55 18" stroke="#3a1a08" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M26 37 Q36 44 46 37" stroke="#7a3010" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="29" y="37" width="6" height="4" rx="1" fill="white"/><rect x="37" y="37" width="6" height="4" rx="1" fill="white"/><ellipse cx="36" cy="10" rx="22" ry="12" fill="#5a3a10"/><rect x="12" y="10" width="48" height="8" rx="4" fill="#888"/><rect x="14" y="6" width="44" height="8" rx="4" fill="#aaa"/><circle cx="36" cy="6" r="4" fill="#888"/>`,
+    'enano-mago':`<rect x="23" y="74" width="11" height="12" rx="5" fill="#7b3fb5"/><rect x="37" y="74" width="11" height="12" rx="5" fill="#7b3fb5"/><ellipse cx="28" cy="86" rx="8" ry="5" fill="#2a0a4a"/><ellipse cx="43" cy="86" rx="8" ry="5" fill="#2a0a4a"/><path d="M14 50 Q18 80 22 88 Q36 82 50 88 Q54 80 58 50Z" fill="#9b59b6" opacity="0.25"/><rect x="14" y="48" width="44" height="30" rx="10" fill="#9b59b6"/><rect x="4" y="50" width="13" height="22" rx="6" fill="#9b59b6"/><rect x="55" y="50" width="13" height="22" rx="6" fill="#9b59b6"/><circle cx="10" cy="73" r="6" fill="#f0c8d0"/><circle cx="62" cy="73" r="6" fill="#f0c8d0"/><rect x="62" y="26" width="3" height="48" rx="1.5" fill="#6b4a10"/><circle cx="63" cy="22" r="9" fill="rgba(180,100,255,0.3)"/><circle cx="63" cy="22" r="6" fill="rgba(220,160,255,0.7)"/><circle cx="63" cy="22" r="3" fill="white"/><ellipse cx="36" cy="26" rx="24" ry="22" fill="#b07840"/><ellipse cx="16" cy="32" rx="6" ry="4" fill="#e8967a" opacity="0.5"/><ellipse cx="56" cy="32" rx="6" ry="4" fill="#e8967a" opacity="0.5"/><ellipse cx="24" cy="26" rx="7" ry="8" fill="white"/><ellipse cx="48" cy="26" rx="7" ry="8" fill="white"/><ellipse cx="24" cy="28" rx="5" ry="6" fill="#4a0a7a"/><ellipse cx="48" cy="28" rx="5" ry="6" fill="#4a0a7a"/><ellipse cx="24" cy="27" rx="3" ry="4" fill="#8a2ab0"/><ellipse cx="48" cy="27" rx="3" ry="4" fill="#8a2ab0"/><circle cx="26" cy="25" r="2" fill="white"/><circle cx="50" cy="25" r="2" fill="white"/><path d="M17 18 Q24 15 31 18" stroke="#3a1a08" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M41 18 Q48 15 55 18" stroke="#3a1a08" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M28 37 Q36 43 44 37" stroke="#9a6030" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M18 36 Q22 50 36 52 Q50 50 54 36" fill="#5a3a10" opacity="0.9"/><path d="M22 38 Q24 48 36 50 Q48 48 50 38" fill="#6a4a18"/><polygon points="36,0 18,18 54,18" fill="#3a1a7a"/><rect x="14" y="16" width="44" height="7" rx="3.5" fill="#5a2a9a"/><circle cx="36" cy="3" r="3" fill="#ffd700"/>`,
+    'enano-explorador':`<rect x="23" y="74" width="11" height="12" rx="5" fill="#1e8449"/><rect x="37" y="74" width="11" height="12" rx="5" fill="#1e8449"/><ellipse cx="28" cy="86" rx="8" ry="5" fill="#0a2a10"/><ellipse cx="43" cy="86" rx="8" ry="5" fill="#0a2a10"/><rect x="14" y="50" width="44" height="28" rx="10" fill="#27ae60"/><rect x="4" y="52" width="13" height="22" rx="6" fill="#27ae60"/><rect x="55" y="52" width="13" height="22" rx="6" fill="#27ae60"/><circle cx="10" cy="75" r="6" fill="#b07840"/><circle cx="62" cy="75" r="6" fill="#b07840"/><path d="M63 38 Q76 48 63 58" stroke="#6b4010" stroke-width="3" fill="none" stroke-linecap="round"/><line x1="63" y1="38" x2="63" y2="58" stroke="#ddd" stroke-width="1.2"/><ellipse cx="36" cy="26" rx="24" ry="22" fill="#b07840"/><ellipse cx="16" cy="32" rx="6" ry="4" fill="#e8967a" opacity="0.5"/><ellipse cx="56" cy="32" rx="6" ry="4" fill="#e8967a" opacity="0.5"/><ellipse cx="24" cy="26" rx="7" ry="8" fill="white"/><ellipse cx="48" cy="26" rx="7" ry="8" fill="white"/><ellipse cx="24" cy="28" rx="5" ry="6" fill="#1a3a0a"/><ellipse cx="48" cy="28" rx="5" ry="6" fill="#1a3a0a"/><ellipse cx="24" cy="27" rx="3" ry="4" fill="#3a7020"/><ellipse cx="48" cy="27" rx="3" ry="4" fill="#3a7020"/><circle cx="26" cy="25" r="2" fill="white"/><circle cx="50" cy="25" r="2" fill="white"/><path d="M17 18 Q24 15 31 18" stroke="#3a1a08" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M41 18 Q48 15 55 18" stroke="#3a1a08" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M28 37 Q36 43 44 37" stroke="#9a6030" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M22 36 Q26 44 36 46 Q46 44 50 36" fill="#4a2a08" opacity="0.8"/><path d="M12 22 Q14 6 36 4 Q58 6 60 22 Q54 14 36 12 Q18 14 12 22Z" fill="#1e8449"/><ellipse cx="36" cy="10" rx="20" ry="10" fill="#1e8449"/>`,
+    'elfo-guerrero':`<rect x="22" y="72" width="10" height="16" rx="5" fill="#c0392b"/><rect x="36" y="72" width="10" height="16" rx="5" fill="#c0392b"/><ellipse cx="27" cy="88" rx="7" ry="4" fill="#6b1a1a"/><ellipse cx="41" cy="88" rx="7" ry="4" fill="#6b1a1a"/><rect x="18" y="50" width="36" height="26" rx="8" fill="#e74c3c"/><rect x="8" y="52" width="12" height="20" rx="6" fill="#e74c3c"/><rect x="52" y="52" width="12" height="20" rx="6" fill="#e74c3c"/><circle cx="14" cy="73" r="5" fill="#c8e8a0"/><circle cx="58" cy="73" r="5" fill="#c8e8a0"/><rect x="60" y="34" width="4" height="30" rx="2" fill="#aaa"/><rect x="56" y="52" width="12" height="4" rx="2" fill="#888"/><rect x="61" y="28" width="2" height="8" rx="1" fill="#ddd"/><ellipse cx="36" cy="28" rx="19" ry="25" fill="#c8e8a0"/><ellipse cx="18" cy="34" rx="5" ry="3" fill="#a0e870" opacity="0.4"/><ellipse cx="54" cy="34" rx="5" ry="3" fill="#a0e870" opacity="0.4"/><path d="M17 22 Q8 16 12 8 Q16 14 19 18Z" fill="#c8e8a0"/><path d="M55 22 Q64 16 60 8 Q56 14 53 18Z" fill="#c8e8a0"/><ellipse cx="26" cy="28" rx="7" ry="9" fill="white"/><ellipse cx="46" cy="28" rx="7" ry="9" fill="white"/><ellipse cx="26" cy="30" rx="5" ry="7" fill="#0a3a1a"/><ellipse cx="46" cy="30" rx="5" ry="7" fill="#0a3a1a"/><ellipse cx="26" cy="29" rx="3" ry="5" fill="#1a8a3a"/><ellipse cx="46" cy="29" rx="3" ry="5" fill="#1a8a3a"/><circle cx="28" cy="26" r="2" fill="white"/><circle cx="48" cy="26" r="2" fill="white"/><path d="M20 19 Q26 16 32 19" stroke="#5a8a40" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M40 19 Q46 16 52 19" stroke="#5a8a40" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M29 40 Q36 45 43 40" stroke="#90c060" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M17 20 Q10 6 18 2 Q20 12 24 8 Q22 0 34 0 Q48 0 46 8 Q50 12 52 2 Q60 6 55 20" fill="#d0e8f8"/><ellipse cx="36" cy="8" rx="18" ry="10" fill="#d0e8f8"/><path d="M17 20 Q8 40 10 65" stroke="#d0e8f8" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M55 20 Q64 40 62 65" stroke="#d0e8f8" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M20 14 Q36 8 52 14" stroke="#ffd700" stroke-width="2" fill="none"/><circle cx="36" cy="10" r="3" fill="#ffd700"/><circle cx="24" cy="14" r="2" fill="#ffd700"/><circle cx="48" cy="14" r="2" fill="#ffd700"/>`,
+    'elfo-mago':`<rect x="22" y="72" width="10" height="16" rx="5" fill="#7b3fb5"/><rect x="36" y="72" width="10" height="16" rx="5" fill="#7b3fb5"/><ellipse cx="27" cy="88" rx="7" ry="4" fill="#3a1a6b"/><ellipse cx="41" cy="88" rx="7" ry="4" fill="#3a1a6b"/><path d="M16 50 Q20 80 22 88 Q36 82 50 88 Q52 80 56 50Z" fill="#9b59b6" opacity="0.25"/><rect x="18" y="48" width="36" height="30" rx="10" fill="#9b59b6"/><rect x="8" y="50" width="12" height="22" rx="6" fill="#9b59b6"/><rect x="52" y="50" width="12" height="22" rx="6" fill="#9b59b6"/><circle cx="14" cy="73" r="5" fill="#c8e8a0"/><circle cx="58" cy="73" r="5" fill="#c8e8a0"/><rect x="61" y="26" width="3" height="48" rx="1.5" fill="#8b6914"/><circle cx="62" cy="22" r="9" fill="rgba(180,100,255,0.35)"/><circle cx="62" cy="22" r="6" fill="rgba(220,160,255,0.75)"/><circle cx="62" cy="22" r="3" fill="white"/><ellipse cx="36" cy="28" rx="19" ry="25" fill="#c8e8a0"/><ellipse cx="18" cy="34" rx="5" ry="3" fill="#a0e870" opacity="0.4"/><ellipse cx="54" cy="34" rx="5" ry="3" fill="#a0e870" opacity="0.4"/><path d="M17 22 Q8 14 13 6 Q17 12 19 18Z" fill="#c8e8a0"/><path d="M55 22 Q64 14 59 6 Q55 12 53 18Z" fill="#c8e8a0"/><ellipse cx="26" cy="28" rx="7" ry="9" fill="white"/><ellipse cx="46" cy="28" rx="7" ry="9" fill="white"/><ellipse cx="26" cy="30" rx="5" ry="7" fill="#3a0a6a"/><ellipse cx="46" cy="30" rx="5" ry="7" fill="#3a0a6a"/><ellipse cx="26" cy="29" rx="3" ry="5" fill="#7a2ab0"/><ellipse cx="46" cy="29" rx="3" ry="5" fill="#7a2ab0"/><circle cx="28" cy="26" r="2" fill="white"/><circle cx="48" cy="26" r="2" fill="white"/><path d="M20 19 Q26 16 32 19" stroke="#8a5a9a" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M40 19 Q46 16 52 19" stroke="#8a5a9a" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M29 40 Q36 45 43 40" stroke="#c080a0" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M17 20 Q10 8 18 2 Q20 14 24 8 Q22 0 36 0 Q50 0 48 8 Q52 14 54 2 Q62 8 55 20" fill="#a0c8f8"/><ellipse cx="36" cy="8" rx="18" ry="10" fill="#a0c8f8"/><path d="M17 20 Q6 42 8 68" stroke="#a0c8f8" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M55 20 Q66 42 64 68" stroke="#a0c8f8" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M20 14 Q36 8 52 14" stroke="#c8a0ff" stroke-width="2" fill="none"/><circle cx="36" cy="10" r="3" fill="#c8a0ff"/>`,
+    'elfo-explorador':`<rect x="22" y="72" width="10" height="16" rx="5" fill="#1e8449"/><rect x="36" y="72" width="10" height="16" rx="5" fill="#1e8449"/><ellipse cx="27" cy="88" rx="7" ry="4" fill="#0a3a1a"/><ellipse cx="41" cy="88" rx="7" ry="4" fill="#0a3a1a"/><rect x="18" y="50" width="36" height="26" rx="8" fill="#27ae60"/><rect x="8" y="52" width="12" height="20" rx="6" fill="#27ae60"/><rect x="52" y="52" width="12" height="20" rx="6" fill="#27ae60"/><circle cx="14" cy="73" r="5" fill="#c8e8a0"/><circle cx="58" cy="73" r="5" fill="#c8e8a0"/><path d="M62 36 Q76 48 62 60" stroke="#6b4010" stroke-width="3" fill="none" stroke-linecap="round"/><line x1="62" y1="36" x2="62" y2="60" stroke="#ddd" stroke-width="1.2"/><ellipse cx="36" cy="28" rx="19" ry="25" fill="#c8e8a0"/><ellipse cx="18" cy="34" rx="5" ry="3" fill="#a0e870" opacity="0.4"/><ellipse cx="54" cy="34" rx="5" ry="3" fill="#a0e870" opacity="0.4"/><path d="M17 22 Q8 14 13 6 Q17 12 19 18Z" fill="#c8e8a0"/><path d="M55 22 Q64 14 59 6 Q55 12 53 18Z" fill="#c8e8a0"/><ellipse cx="26" cy="28" rx="7" ry="9" fill="white"/><ellipse cx="46" cy="28" rx="7" ry="9" fill="white"/><ellipse cx="26" cy="30" rx="5" ry="7" fill="#0a3a1a"/><ellipse cx="46" cy="30" rx="5" ry="7" fill="#0a3a1a"/><ellipse cx="26" cy="29" rx="3" ry="5" fill="#2a8a40"/><ellipse cx="46" cy="29" rx="3" ry="5" fill="#2a8a40"/><circle cx="28" cy="26" r="2" fill="white"/><circle cx="48" cy="26" r="2" fill="white"/><path d="M20 19 Q26 16 32 19" stroke="#5a8a40" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M40 19 Q46 16 52 19" stroke="#5a8a40" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M29 40 Q36 45 43 40" stroke="#80c050" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M17 20 Q10 8 18 2 Q20 12 24 8 Q22 0 36 0 Q50 0 48 8 Q52 12 54 2 Q62 8 55 20" fill="#f0d060"/><ellipse cx="36" cy="8" rx="18" ry="10" fill="#f0d060"/><path d="M55 18 Q64 36 58 60" stroke="#f0d060" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M20 14 Q36 6 52 14" stroke="#27ae60" stroke-width="2" fill="none"/><path d="M28 10 Q36 4 30 12" fill="#27ae60" opacity="0.8"/><path d="M36 8 Q44 2 42 10" fill="#27ae60" opacity="0.8"/>`
+  }
+  const inner=s[especie+'-'+cat]||s['humano-guerrero']
+  return '<svg width="'+size+'" height="'+h+'" viewBox="0 0 72 96">'+inner+'</svg>'
+}
+
+function crearPersonaje(nombre,especie,cat){
+  const p={id:nextId++,nombre,especie,categoria:cat,stats:calcStats(especie,cat),victorias:0,derrotas:0}
+  personajes.push(p); renderRoster(); actualizarSelects(); toast(nombre+' ha sido forjado'); return p
+}
+function crearManual(){
+  const n=document.getElementById('inp-nombre').value.trim(),e=document.getElementById('inp-especie').value,c=document.getElementById('inp-cat').value
+  if(!n){toast('Escribe un nombre primero');return}
+  crearPersonaje(n,e,c); document.getElementById('inp-nombre').value=''; switchTab('roster')
+}
+function crearAleatorio(){const e=rnd(ESPECIES),c=rnd(CATS),n=rnd(NOMBRES[e]);crearPersonaje(n,e,c)}
+function aleatorioEnFormulario(){
+  const e=rnd(ESPECIES),c=rnd(CATS),n=rnd(NOMBRES[e])
+  document.getElementById('inp-especie').value=e; document.getElementById('inp-cat').value=c; document.getElementById('inp-nombre').value=n; actualizarPreview()
+}
+function eliminar(id){personajes=personajes.filter(p=>p.id!==id);renderRoster();actualizarSelects();toast('Héroe eliminado')}
+
+function renderRoster(){
+  const grid=document.getElementById('chars-grid')
+  document.getElementById('count').textContent=personajes.length
+  if(!personajes.length){grid.innerHTML='<div class="empty">Ningún héroe registrado. Forja el primero.</div>';return}
+  grid.innerHTML=personajes.map(p=>`<div class="char-card ${p.categoria}"><button class="delete-btn" onclick="eliminar(${p.id})">✕</button><div class="char-name">${p.nombre}</div><div class="char-meta"><span class="badge ${p.especie}">${p.especie}</span><span class="badge ${p.categoria}">${p.categoria}</span></div><div class="char-sprite">${getSprite(p.especie,p.categoria,64)}</div><div class="stats-mini"><div class="stat-mini"><span class="stat-mini-val">${p.stats.vida}</span><span class="stat-mini-label">VIDA</span></div><div class="stat-mini"><span class="stat-mini-val">${p.stats.ataque}</span><span class="stat-mini-label">ATQ</span></div><div class="stat-mini"><span class="stat-mini-val">${p.stats.defensa}</span><span class="stat-mini-label">DEF</span></div><div class="stat-mini"><span class="stat-mini-val">${p.stats.iniciativa}</span><span class="stat-mini-label">INIT</span></div></div><div class="record">${p.victorias}V · ${p.derrotas}D</div></div>`).join('')
+}
+
+function actualizarPreview(){
+  const e=document.getElementById('inp-especie').value,c=document.getElementById('inp-cat').value,s=calcStats(e,c)
+  const max={vida:160,ataque:50,defensa:30,iniciativa:35}
+  document.getElementById('stat-preview').innerHTML=['vida','ataque','defensa','iniciativa'].map(k=>`<div class="stat-bar"><div class="stat-bar-label"><span>${k.toUpperCase()}</span><span>${s[k]}</span></div><div class="stat-track"><div class="stat-fill ${k}" style="width:${Math.max(0,Math.min(100,(s[k]/max[k])*100))}%"></div></div></div>`).join('')
+}
+
+function actualizarSelects(){
+  ['sel-p1','sel-p2'].forEach(id=>{
+    const sel=document.getElementById(id),cur=sel.value
+    sel.innerHTML='<option value="">— Elegir héroe —</option>'+personajes.map(p=>`<option value="${p.id}">${p.nombre} (${p.especie} ${p.categoria})</option>`).join('')
+    if(personajes.find(p=>p.id==cur))sel.value=cur
+  }); actualizarPreviews()
+}
+
+function actualizarPreviews(){
+  ['p1','p2'].forEach(side=>{
+    const sel=document.getElementById('sel-'+side),div=document.getElementById('prev-'+side),p=personajes.find(x=>x.id==sel.value)
+    if(!p){div.innerHTML='<span style="color:rgba(201,168,76,0.2);font-size:12px;font-style:italic">— elige héroe —</span>';return}
+    div.innerHTML=getSprite(p.especie,p.categoria,64)+`<div class="fighter-name">${p.nombre}</div><div style="margin-top:3px"><span class="badge ${p.especie}">${p.especie}</span><span class="badge ${p.categoria}">${p.categoria}</span></div>`
+  })
+}
+
+function simular(a,b){
+  let vA=a.stats.vida,vB=b.stats.vida,log=[],ronda=0
+  const[prim,seg]=a.stats.iniciativa>=b.stats.iniciativa?[a,b]:[b,a]
+  let vP=prim===a?vA:vB,vS=prim===a?vB:vA
+  log.push({txt:prim.nombre+' (iniciativa '+prim.stats.iniciativa+') ataca primero',tipo:'info'})
+  while(vP>0&&vS>0&&ronda<60){
+    ronda++
+    const d1=Math.max(1,prim.stats.ataque-seg.stats.defensa);vS-=d1
+    log.push({txt:'Ronda '+ronda+'a: '+prim.nombre+' golpea a '+seg.nombre+' [-'+d1+' PV] ('+Math.max(0,vS)+' restante)',tipo:'dmg'})
+    if(vS<=0)break
+    const d2=Math.max(1,seg.stats.ataque-prim.stats.defensa);vP-=d2
+    log.push({txt:'Ronda '+ronda+'b: '+seg.nombre+' golpea a '+prim.nombre+' [-'+d2+' PV] ('+Math.max(0,vP)+' restante)',tipo:'dmg'})
+  }
+  const ganador=vP>0?prim:seg,perdedor=ganador===prim?seg:prim,vidaFinal=Math.max(0,vP>0?vP:vS)
+  log.push({txt:ganador.nombre+' VICTORIOSO en '+ronda+' ronda(s)',tipo:'win'})
+  const g=personajes.find(p=>p.id===ganador.id),pe=personajes.find(p=>p.id===perdedor.id)
+  if(g)g.victorias++;if(pe)pe.derrotas++;renderRoster()
+  return{ganador,perdedor,rondas:ronda,log,vidaFinal,vidaMax:ganador.stats.vida}
+}
+
+function iniciarCombate(){
+  const id1=parseInt(document.getElementById('sel-p1').value),id2=parseInt(document.getElementById('sel-p2').value)
+  if(!id1||!id2){toast('Elige dos combatientes');return}
+  if(id1===id2){toast('Un héroe no puede luchar consigo mismo');return}
+  mostrarBatalla(personajes.find(p=>p.id===id1),personajes.find(p=>p.id===id2),simular(personajes.find(p=>p.id===id1),personajes.find(p=>p.id===id2)))
+}
+
+function mostrarBatalla(p1,p2,res){
+  document.getElementById('battle-area').style.display='block'
+  const logDiv=document.getElementById('battle-log'),hpDiv=document.getElementById('battle-hp'),winDiv=document.getElementById('winner-area')
+  logDiv.innerHTML='';winDiv.innerHTML=''
+  const pct1=res.ganador.id===p1.id?Math.round((res.vidaFinal/res.vidaMax)*100):0
+  const pct2=res.ganador.id===p2.id?Math.round((res.vidaFinal/res.vidaMax)*100):0
+  hpDiv.innerHTML=`<div class="hp-row"><div><div class="hp-name">${p1.nombre}</div><div class="hp-wrap"><div class="hp-bar" style="width:${pct1}%"></div></div></div><div class="hp-center">PV</div><div><div class="hp-name" style="text-align:right">${p2.nombre}</div><div class="hp-wrap"><div class="hp-bar" style="width:${pct2}%"></div></div></div></div>`
+  let i=0
+  function next(){
+    if(i>=res.log.length)return
+    const l=res.log[i++],d=document.createElement('div')
+    d.className='log-line '+l.tipo; d.textContent=l.tipo==='win'?'⚔ '+l.txt:'› '+l.txt
+    logDiv.appendChild(d);logDiv.scrollTop=logDiv.scrollHeight
+    if(i<res.log.length)setTimeout(next,i<res.log.length-1?200:700)
+    else winDiv.innerHTML=`<div class="winner-banner">${getSprite(res.ganador.especie,res.ganador.categoria,52)}<div class="winner-name">${res.ganador.nombre}</div><div class="winner-sub">VICTORIOSO · ${res.rondas} RONDAS</div></div>`
+  }
+  next()
+}
+
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['roster','crear','combate'][i]===id))
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'))
+  document.getElementById('sec-'+id).classList.add('active')
+  if(id==='combate')actualizarSelects()
+  if(id==='crear')actualizarPreview()
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+crearPersonaje('Grindal','enano','guerrero')
+crearPersonaje('Lyshara','elfo','mago')
+crearPersonaje('Torben','humano','explorador')
+actualizarPreview()
+</script>
+</body>
+</html>
