@@ -16,15 +16,15 @@ const PORT = process.env.PORT || 3000;
 // Parser JSON
 app.use(express.json());
 
-const path = require('path')
-app.use(express.static(path.join(__dirname, 'client')))
+const path = require("path");
+app.use(express.static(path.join(__dirname, "client")));
 
 // Logger (registra todas las requests)
 app.use(logger);
 
 // ==================== ROUTERS ====================
-app.use("/personajes", personajeRouter);
-app.use("/combates", combateRouter);
+app.use("/api/personajes", personajeRouter);
+app.use("/api/combates", combateRouter);
 
 // Ruta de bienvenida
 app.get("/", (req, res) => {
@@ -32,9 +32,9 @@ app.get("/", (req, res) => {
     mensaje: "🎮 Chronicles of Iron — RPG Backend API",
     version: "1.0.0",
     endpoints: {
-      personajes: "/personajes",
-      combates: "/combates"
-    }
+      personajes: "/api/personajes",
+      combates: "/api/combates",
+    },
   });
 });
 
@@ -45,5 +45,7 @@ app.use(errorHandler);
 // ==================== INICIAR SERVIDOR ====================
 app.listen(PORT, () => {
   console.log(`🎮 Servidor RPG Backend corriendo en http://localhost:${PORT}`);
-  console.log(`📚 API disponible en http://localhost:${PORT}/personajes y http://localhost:${PORT}/combates`);
+  console.log(
+    `📚 API disponible en http://localhost:${PORT}/api/personajes y http://localhost:${PORT}/api/combates`,
+  );
 });
