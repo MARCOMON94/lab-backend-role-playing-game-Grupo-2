@@ -16,6 +16,9 @@ const PORT = process.env.PORT || 3000;
 // Parser JSON
 app.use(express.json());
 
+const path = require('path')
+app.use(express.static(path.join(__dirname, 'client')))
+
 // Logger (registra todas las requests)
 app.use(logger);
 
