@@ -1,3 +1,5 @@
+const BasePersonaje = require("./BasePersonaje")
+
 const BONUS_ESPECIE = {
   humano:  { vida: 0,   ataque: 0,  defensa: 0,  iniciativa: 5  },
   enano:   { vida: 20,  ataque: 5,  defensa: 10, iniciativa: -5 },
@@ -10,8 +12,9 @@ const BONUS_CATEGORIA = {
   mago:       { vida: -10, ataque: 25, defensa: -5, iniciativa: 5  }
 }
 
-class Personaje {
+class Personaje extends BasePersonaje {
   constructor({ id, nombre, especie, categoria }) {
+    super()
     this.id        = id
     this.nombre    = nombre
     this.especie   = especie
@@ -32,11 +35,6 @@ class Personaje {
       defensa:    base.defensa    + (be.defensa     || 0) + (bc.defensa    || 0),
       iniciativa: base.iniciativa + (be.iniciativa  || 0) + (bc.iniciativa || 0)
     }
-  }
-
-  // Método que las subclases deben sobreescribir
-  habilidadEspecial() {
-    throw new Error(`${this.constructor.name} debe implementar habilidadEspecial()`)
   }
 
   get ficha() {
