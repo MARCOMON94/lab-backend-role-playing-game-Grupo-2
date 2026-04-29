@@ -60,6 +60,21 @@ class Combate {
       // Si el primero usó esquiva esta ronda, el segundo falla
       if (usarHabilidad && primero.categoria === 'explorador') {
         log.push(`Ronda ${ronda}b: ${segundo.nombre} falla — ${primero.nombre} esquivó`)
+      } else if (usarHabilidad) {
+        const hab = segundo.habilidadEspecial(vidaPrimero)
+        log.push(`✨ ${hab.descripcion}`)
+
+        if (hab.esquiva) {
+          vidaPrimero -= hab.danio
+          log.push(`Ronda ${ronda}b: ${segundo.nombre} → ${primero.nombre} [-${hab.danio} vida] (${Math.max(0, vidaPrimero)} restante)`)
+        } else if (hab.ignoraDefensa) {
+          vidaPrimero -= hab.danio
+          log.push(`Ronda ${ronda}b: ${segundo.nombre} → ${primero.nombre} [-${hab.danio} vida, sin defensa] (${Math.max(0, vidaPrimero)} restante)`)
+        } else {
+          vidaPrimero -= hab.danio
+          vidaSegundo -= hab.costePropio
+          log.push(`Ronda ${ronda}b: ${segundo.nombre} → ${primero.nombre} [-${hab.danio} vida] (${Math.max(0, vidaPrimero)} restante) — coste propio: -${hab.costePropio}`)
+        }
       } else {
         const danio = Math.max(1, segundo.stats.ataque - primero.stats.defensa)
         vidaPrimero -= danio
