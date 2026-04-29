@@ -272,23 +272,27 @@ function actualizarPreviews(){
 }
 
 function simular(a,b){
-  let vA=a.stats.vida,vB=b.stats.vida,log=[],ronda=0
+  let vA=a.stats.vida,vB=b.stats.vida,log=[],frames=[],ronda=0
   const[prim,seg]=a.stats.iniciativa>=b.stats.iniciativa?[a,b]:[b,a]
   let vP=prim===a?vA:vB,vS=prim===a?vB:vA
   log.push({txt:prim.nombre+' (iniciativa '+prim.stats.iniciativa+') ataca primero',tipo:'info'})
+  frames.push({vP,vS})
   while(vP>0&&vS>0&&ronda<60){
     ronda++
     const d1=Math.max(1,prim.stats.ataque-seg.stats.defensa);vS-=d1
     log.push({txt:'Ronda '+ronda+'a: '+prim.nombre+' golpea a '+seg.nombre+' [-'+d1+' PV] ('+Math.max(0,vS)+' restante)',tipo:'dmg'})
+    frames.push({vP:Math.max(0,vP),vS:Math.max(0,vS)})
     if(vS<=0)break
     const d2=Math.max(1,seg.stats.ataque-prim.stats.defensa);vP-=d2
     log.push({txt:'Ronda '+ronda+'b: '+seg.nombre+' golpea a '+prim.nombre+' [-'+d2+' PV] ('+Math.max(0,vP)+' restante)',tipo:'dmg'})
+    frames.push({vP:Math.max(0,vP),vS:Math.max(0,vS)})
   }
-  const ganador=vP>0?prim:seg,perdedor=ganador===prim?seg:prim,vidaFinal=Math.max(0,vP>0?vP:vS)
+  const ganador=vP>0?prim:seg,perdedor=ganador===prim?seg:prim
   log.push({txt:ganador.nombre+' VICTORIOSO en '+ronda+' ronda(s)',tipo:'win'})
+  frames.push({vP:Math.max(0,vP),vS:Math.max(0,vS)})
   const g=personajes.find(p=>p.id===ganador.id),pe=personajes.find(p=>p.id===perdedor.id)
   if(g)g.victorias++;if(pe)pe.derrotas++;renderRoster()
-  return{ganador,perdedor,rondas:ronda,log,vidaFinal,vidaMax:ganador.stats.vida}
+  return{ganador,perdedor,rondas:ronda,log,frames,primeroId:prim.id}
 }
 
 function iniciarCombate(){
@@ -298,23 +302,42 @@ function iniciarCombate(){
   mostrarBatalla(personajes.find(p=>p.id===id1),personajes.find(p=>p.id===id2),simular(personajes.find(p=>p.id===id1),personajes.find(p=>p.id===id2)))
 }
 
+function hpColor(pct){
+  const h=Math.round(pct*1.2)
+  return`linear-gradient(90deg,hsl(${h},70%,22%),hsl(${h},80%,38%))`
+}
+
+function actualizarBarra(id,vida,max){
+  const pct=Math.round(vida/max*100),bar=document.getElementById(id)
+  bar.style.width=pct+'%'
+  bar.style.background=hpColor(pct)
+}
+
 function mostrarBatalla(p1,p2,res){
   document.getElementById('battle-area').style.display='block'
   const logDiv=document.getElementById('battle-log'),hpDiv=document.getElementById('battle-hp'),winDiv=document.getElementById('winner-area')
   logDiv.innerHTML='';winDiv.innerHTML=''
-  const pct1=res.ganador.id===p1.id?Math.round((res.vidaFinal/res.vidaMax)*100):0
-  const pct2=res.ganador.id===p2.id?Math.round((res.vidaFinal/res.vidaMax)*100):0
-  hpDiv.innerHTML=`<div class="hp-row"><div><div class="hp-name">${p1.nombre}</div><div class="hp-wrap"><div class="hp-bar" style="width:${pct1}%"></div></div></div><div class="hp-center">PV</div><div><div class="hp-name" style="text-align:right">${p2.nombre}</div><div class="hp-wrap"><div class="hp-bar" style="width:${pct2}%"></div></div></div></div>`
+  const p1esPrimero=res.primeroId===p1.id
+  hpDiv.innerHTML=`<div class="hp-row"><div><div class="hp-name">${p1.nombre}</div><div class="hp-wrap"><div class="hp-bar" id="bar-p1" style="width:100%"></div></div></div><div class="hp-center">PV</div><div><div class="hp-name" style="text-align:right">${p2.nombre}</div><div class="hp-wrap"><div class="hp-bar" id="bar-p2" style="width:100%"></div></div></div></div>`
+  actualizarBarra('bar-p1',p1.stats.vida,p1.stats.vida)
+  actualizarBarra('bar-p2',p2.stats.vida,p2.stats.vida)
   let i=0
   function next(){
     if(i>=res.log.length)return
-    const l=res.log[i++],d=document.createElement('div')
+    const l=res.log[i],fr=res.frames[i]
+    i++
+    if(fr){
+      const vP1=p1esPrimero?fr.vP:fr.vS,vP2=p1esPrimero?fr.vS:fr.vP
+      actualizarBarra('bar-p1',vP1,p1.stats.vida)
+      actualizarBarra('bar-p2',vP2,p2.stats.vida)
+    }
+    const d=document.createElement('div')
     d.className='log-line '+l.tipo; d.textContent=l.tipo==='win'?'⚔ '+l.txt:'› '+l.txt
     logDiv.appendChild(d);logDiv.scrollTop=logDiv.scrollHeight
     if(i<res.log.length)setTimeout(next,i<res.log.length-1?200:700)
     else winDiv.innerHTML=`<div class="winner-banner">${getSprite(res.ganador.especie,res.ganador.categoria,52)}<div class="winner-name">${res.ganador.nombre}</div><div class="winner-sub">VICTORIOSO · ${res.rondas} RONDAS</div></div>`
   }
-  next()
+  setTimeout(next,50)
 }
 
 function switchTab(id){

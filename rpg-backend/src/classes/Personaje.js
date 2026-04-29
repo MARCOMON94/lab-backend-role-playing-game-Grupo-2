@@ -12,7 +12,18 @@ const BONUS_CATEGORIA = {
   mago:       { vida: -10, ataque: 25, defensa: -5, iniciativa: 5  }
 }
 
+/**
+ * Representa un personaje del juego.
+ * Extiende BasePersonaje e implementa el cálculo de stats.
+ */
 class Personaje extends BasePersonaje {
+  /**
+   * @param {Object} datos
+   * @param {number} datos.id
+   * @param {string} datos.nombre
+   * @param {'humano'|'enano'|'elfo'} datos.especie
+   * @param {'guerrero'|'explorador'|'mago'} datos.categoria
+   */
   constructor({ id, nombre, especie, categoria }) {
     super()
     this.id        = id
@@ -24,6 +35,10 @@ class Personaje extends BasePersonaje {
     this.derrotas  = 0
   }
 
+  /**
+   * Calcula los stats finales: base + bonus de especie + bonus de categoría.
+   * @returns {{ vida: number, ataque: number, defensa: number, iniciativa: number }}
+   */
   _calcularStats() {
     const base = { vida: 100, ataque: 10, defensa: 5, iniciativa: 5 }
     const be   = BONUS_ESPECIE[this.especie]   || {}
@@ -37,6 +52,10 @@ class Personaje extends BasePersonaje {
     }
   }
 
+  /**
+   * Devuelve la ficha pública del personaje (objeto plano sin métodos).
+   * @returns {{ id: number, nombre: string, especie: string, categoria: string, stats: Object, victorias: number, derrotas: number }}
+   */
   get ficha() {
     return {
       id:        this.id,
