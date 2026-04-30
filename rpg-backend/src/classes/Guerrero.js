@@ -7,8 +7,8 @@ class Guerrero extends Personaje {
    * @returns {{ danio: number, costePropio: number, descripcion: string }}
    */
   habilidadEspecial() {
-    const danio = this.stats.ataque * 2
-    return { danio, costePropio: 10, descripcion: `${this.nombre} usa GOLPE FUERTE (${danio} daño)` }
+    const danio = Math.floor(this.stats.ataque * 1.5)
+    return { danio, costePropio: 20, descripcion: `${this.nombre} usa GOLPE FUERTE (${danio} daño)` }
   }
 }
 

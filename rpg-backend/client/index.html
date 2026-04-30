@@ -94,7 +94,7 @@
     .hp-bar { height: 100%; border-radius: 4px; transition: width 0.6s ease; background: linear-gradient(90deg, #1e8449, #27ae60); }
     .hp-center { font-family: 'Cinzel', serif; font-size: 9px; color: rgba(201,168,76,0.4); text-align: center; }
     .hp-name { font-family: 'Cinzel', serif; font-size: 10px; color: rgba(201,168,76,0.6); margin-bottom: 4px; }
-    .log-box { background: rgba(0,0,0,0.5); border: 1px solid rgba(201,168,76,0.08); border-radius: 3px; padding: 12px; max-height: 220px; overflow-y: auto; font-size: 13px; line-height: 1.9; }
+    .log-box { background: rgba(0,0,0,0.5); border: 1px solid rgba(201,168,76,0.08); border-radius: 3px; padding: 12px; max-height: 220px; overflow-y: auto; scrollbar-gutter: stable; font-size: 13px; line-height: 1.9; }
     .log-box::-webkit-scrollbar { width: 3px; }
     .log-box::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.25); border-radius: 2px; }
     .log-line { padding: 1px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
@@ -200,7 +200,13 @@ const BONUS_ESPECIE={humano:{vida:0,ataque:0,defensa:0,iniciativa:5},enano:{vida
 const BONUS_CAT={guerrero:{vida:30,ataque:15,defensa:10,iniciativa:0},explorador:{vida:10,ataque:10,defensa:5,iniciativa:15},mago:{vida:-10,ataque:25,defensa:-5,iniciativa:5}}
 const NOMBRES={humano:['Aldric','Mara','Torben','Elisa','Cain','Sera'],enano:['Durgin','Broka','Halvard','Ilda','Grimr','Vorna'],elfo:['Aelindra','Sorin','Lyshara','Eryn','Caladel','Nimue']}
 const ESPECIES=['humano','enano','elfo'], CATS=['guerrero','explorador','mago']
-let personajes=[], nextId=1
+let personajes=[]
+
+async function apiFetch(path,opts={}){
+  const res=await fetch(path,{headers:{'Content-Type':'application/json'},...opts})
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.mensaje||'Error del servidor')}
+  return res.json()
+}
 
 function rnd(arr){return arr[Math.floor(Math.random()*arr.length)]}
 function calcStats(esp,cat){
@@ -226,21 +232,47 @@ function getSprite(especie,cat,size){
   return '<svg width="'+size+'" height="'+h+'" viewBox="0 0 72 96">'+inner+'</svg>'
 }
 
-function crearPersonaje(nombre,especie,cat){
-  const p={id:nextId++,nombre,especie,categoria:cat,stats:calcStats(especie,cat),victorias:0,derrotas:0}
-  personajes.push(p); renderRoster(); actualizarSelects(); toast(nombre+' ha sido forjado'); return p
+async function crearPersonaje(nombre,especie,cat){
+  try{
+    const p=await apiFetch('/personajes/manual',{method:'POST',body:JSON.stringify({nombre,especie,categoria:cat})})
+    personajes.push(p);renderRoster();actualizarSelects();toast(nombre+' ha sido forjado');return p
+  }catch(e){toast(e.message)}
 }
-function crearManual(){
+async function crearManual(){
   const n=document.getElementById('inp-nombre').value.trim(),e=document.getElementById('inp-especie').value,c=document.getElementById('inp-cat').value
   if(!n){toast('Escribe un nombre primero');return}
-  crearPersonaje(n,e,c); document.getElementById('inp-nombre').value=''; switchTab('roster')
+  await crearPersonaje(n,e,c);document.getElementById('inp-nombre').value='';switchTab('roster')
 }
-function crearAleatorio(){const e=rnd(ESPECIES),c=rnd(CATS),n=rnd(NOMBRES[e]);crearPersonaje(n,e,c)}
+async function crearAleatorio(){
+  try{const p=await apiFetch('/personajes/aleatorio',{method:'POST'});personajes.push(p);renderRoster();actualizarSelects();toast(p.nombre+' ha sido forjado')}
+  catch(e){toast(e.message)}
+}
 function aleatorioEnFormulario(){
   const e=rnd(ESPECIES),c=rnd(CATS),n=rnd(NOMBRES[e])
   document.getElementById('inp-especie').value=e; document.getElementById('inp-cat').value=c; document.getElementById('inp-nombre').value=n; actualizarPreview()
 }
-function eliminar(id){personajes=personajes.filter(p=>p.id!==id);renderRoster();actualizarSelects();toast('Héroe eliminado')}
+async function eliminar(id){
+  try{await apiFetch('/personajes/'+id,{method:'DELETE'});personajes=personajes.filter(p=>p.id!==id);renderRoster();actualizarSelects();toast('Héroe eliminado')}
+  catch(e){toast(e.message)}
+}
+
+async function cargarPersonajes(){
+  try{
+    personajes=await apiFetch('/personajes')
+    if(personajes.length===0){
+      const defaults=[
+        {nombre:'Grindal',especie:'enano',categoria:'guerrero'},
+        {nombre:'Lyshara',especie:'elfo',categoria:'mago'},
+        {nombre:'Torben',especie:'humano',categoria:'explorador'}
+      ]
+      for(const d of defaults){
+        const p=await apiFetch('/personajes/manual',{method:'POST',body:JSON.stringify(d)})
+        personajes.push(p)
+      }
+    }
+    renderRoster();actualizarSelects()
+  }catch(e){console.error('No se pudieron cargar los personajes',e)}
+}
 
 function renderRoster(){
   const grid=document.getElementById('chars-grid')
@@ -271,35 +303,17 @@ function actualizarPreviews(){
   })
 }
 
-function simular(a,b){
-  let vA=a.stats.vida,vB=b.stats.vida,log=[],frames=[],ronda=0
-  const[prim,seg]=a.stats.iniciativa>=b.stats.iniciativa?[a,b]:[b,a]
-  let vP=prim===a?vA:vB,vS=prim===a?vB:vA
-  log.push({txt:prim.nombre+' (iniciativa '+prim.stats.iniciativa+') ataca primero',tipo:'info'})
-  frames.push({vP,vS})
-  while(vP>0&&vS>0&&ronda<60){
-    ronda++
-    const d1=Math.max(1,prim.stats.ataque-seg.stats.defensa);vS-=d1
-    log.push({txt:'Ronda '+ronda+'a: '+prim.nombre+' golpea a '+seg.nombre+' [-'+d1+' PV] ('+Math.max(0,vS)+' restante)',tipo:'dmg'})
-    frames.push({vP:Math.max(0,vP),vS:Math.max(0,vS)})
-    if(vS<=0)break
-    const d2=Math.max(1,seg.stats.ataque-prim.stats.defensa);vP-=d2
-    log.push({txt:'Ronda '+ronda+'b: '+seg.nombre+' golpea a '+prim.nombre+' [-'+d2+' PV] ('+Math.max(0,vP)+' restante)',tipo:'dmg'})
-    frames.push({vP:Math.max(0,vP),vS:Math.max(0,vS)})
-  }
-  const ganador=vP>0?prim:seg,perdedor=ganador===prim?seg:prim
-  log.push({txt:ganador.nombre+' VICTORIOSO en '+ronda+' ronda(s)',tipo:'win'})
-  frames.push({vP:Math.max(0,vP),vS:Math.max(0,vS)})
-  const g=personajes.find(p=>p.id===ganador.id),pe=personajes.find(p=>p.id===perdedor.id)
-  if(g)g.victorias++;if(pe)pe.derrotas++;renderRoster()
-  return{ganador,perdedor,rondas:ronda,log,frames,primeroId:prim.id}
-}
-
-function iniciarCombate(){
+async function iniciarCombate(){
   const id1=parseInt(document.getElementById('sel-p1').value),id2=parseInt(document.getElementById('sel-p2').value)
   if(!id1||!id2){toast('Elige dos combatientes');return}
   if(id1===id2){toast('Un héroe no puede luchar consigo mismo');return}
-  mostrarBatalla(personajes.find(p=>p.id===id1),personajes.find(p=>p.id===id2),simular(personajes.find(p=>p.id===id1),personajes.find(p=>p.id===id2)))
+  try{
+    const resultado=await apiFetch('/combates',{method:'POST',body:JSON.stringify({id1,id2})})
+    const p1=personajes.find(p=>p.id===id1),p2=personajes.find(p=>p.id===id2)
+    const g=personajes.find(p=>p.nombre===resultado.ganador),pe=personajes.find(p=>p.nombre===resultado.perdedor)
+    if(g)g.victorias++;if(pe)pe.derrotas++;renderRoster()
+    mostrarBatalla(p1,p2,resultado)
+  }catch(e){toast(e.message)}
 }
 
 function hpColor(pct){
@@ -317,25 +331,33 @@ function mostrarBatalla(p1,p2,res){
   document.getElementById('battle-area').style.display='block'
   const logDiv=document.getElementById('battle-log'),hpDiv=document.getElementById('battle-hp'),winDiv=document.getElementById('winner-area')
   logDiv.innerHTML='';winDiv.innerHTML=''
-  const p1esPrimero=res.primeroId===p1.id
   hpDiv.innerHTML=`<div class="hp-row"><div><div class="hp-name">${p1.nombre}</div><div class="hp-wrap"><div class="hp-bar" id="bar-p1" style="width:100%"></div></div></div><div class="hp-center">PV</div><div><div class="hp-name" style="text-align:right">${p2.nombre}</div><div class="hp-wrap"><div class="hp-bar" id="bar-p2" style="width:100%"></div></div></div></div>`
   actualizarBarra('bar-p1',p1.stats.vida,p1.stats.vida)
   actualizarBarra('bar-p2',p2.stats.vida,p2.stats.vida)
+  let hpP1=p1.stats.vida, hpP2=p2.stats.vida
+  const logItems=res.log.map(txt=>({txt,tipo:txt.includes('🏆')?'win':(txt.includes('✨')||txt.includes('⚔'))?'info':'dmg'}))
   let i=0
   function next(){
-    if(i>=res.log.length)return
-    const l=res.log[i],fr=res.frames[i]
+    if(i>=logItems.length)return
+    const l=logItems[i]
     i++
-    if(fr){
-      const vP1=p1esPrimero?fr.vP:fr.vS,vP2=p1esPrimero?fr.vS:fr.vP
-      actualizarBarra('bar-p1',vP1,p1.stats.vida)
-      actualizarBarra('bar-p2',vP2,p2.stats.vida)
+    const restoMatch=l.txt.match(/\((\d+) restante\)/)
+    if(restoMatch){
+      const resto=parseInt(restoMatch[1])
+      const quienMatch=l.txt.match(/→ (.+?) \[/)||l.txt.match(/: (.+?) (?:se cura|recupera) \[/)
+      if(quienMatch){
+        if(quienMatch[1]===p1.nombre){hpP1=resto;actualizarBarra('bar-p1',hpP1,p1.stats.vida)}
+        else if(quienMatch[1]===p2.nombre){hpP2=resto;actualizarBarra('bar-p2',hpP2,p2.stats.vida)}
+      }
     }
     const d=document.createElement('div')
-    d.className='log-line '+l.tipo; d.textContent=l.tipo==='win'?'⚔ '+l.txt:'› '+l.txt
+    d.className='log-line '+l.tipo;d.textContent=l.tipo==='win'?'⚔ '+l.txt:'› '+l.txt
     logDiv.appendChild(d);logDiv.scrollTop=logDiv.scrollHeight
-    if(i<res.log.length)setTimeout(next,i<res.log.length-1?200:700)
-    else winDiv.innerHTML=`<div class="winner-banner">${getSprite(res.ganador.especie,res.ganador.categoria,52)}<div class="winner-name">${res.ganador.nombre}</div><div class="winner-sub">VICTORIOSO · ${res.rondas} RONDAS</div></div>`
+    if(i<logItems.length)setTimeout(next,i<logItems.length-1?200:700)
+    else{
+      const g=personajes.find(p=>p.nombre===res.ganador)||{nombre:res.ganador,especie:'humano',categoria:'guerrero'}
+      winDiv.innerHTML=`<div class="winner-banner">${getSprite(g.especie,g.categoria,52)}<div class="winner-name">${res.ganador}</div><div class="winner-sub">VICTORIOSO · ${res.rondas} RONDAS</div></div>`
+    }
   }
   setTimeout(next,50)
 }
@@ -350,9 +372,7 @@ function switchTab(id){
 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
 
-crearPersonaje('Grindal','enano','guerrero')
-crearPersonaje('Lyshara','elfo','mago')
-crearPersonaje('Torben','humano','explorador')
+cargarPersonajes()
 actualizarPreview()
 </script>
 </body>

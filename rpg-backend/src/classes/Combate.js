@@ -31,10 +31,18 @@ class Combate {
 
       // — Turno del primero —
       if (usarHabilidad) {
-        const hab = primero.habilidadEspecial(vidaSegundo)
+        const hab = primero.habilidadEspecial(vidaSegundo, vidaPrimero)
         log.push(`✨ ${hab.descripcion}`)
 
-        if (hab.esquiva) {
+        if (hab.curacion) {
+          const critico = Math.random() < 0.40
+          const danioFinal = critico ? hab.danio * 2 : hab.danio
+          const curacionFinal = critico ? hab.curacion * 2 : hab.curacion
+          vidaSegundo -= danioFinal
+          vidaPrimero = Math.min(primero.stats.vida, vidaPrimero + curacionFinal)
+          log.push(`Ronda ${ronda}a: ${primero.nombre} → ${segundo.nombre} [-${danioFinal} vida]${critico ? ' 💥 CRÍTICO' : ''} (${Math.max(0, vidaSegundo)} restante)`)
+          log.push(`Ronda ${ronda}a: ${primero.nombre} recupera [+${curacionFinal} vida] (${vidaPrimero} restante)`)
+        } else if (hab.esquiva) {
           // Explorador: ataca normal pero el siguiente golpe del rival falla
           vidaSegundo -= hab.danio
           log.push(`Ronda ${ronda}a: ${primero.nombre} → ${segundo.nombre} [-${hab.danio} vida] (${Math.max(0, vidaSegundo)} restante)`)
@@ -49,10 +57,18 @@ class Combate {
           log.push(`Ronda ${ronda}a: ${primero.nombre} → ${segundo.nombre} [-${hab.danio} vida] (${Math.max(0, vidaSegundo)} restante) — coste propio: -${hab.costePropio}`)
         }
       } else {
-        const danio = Math.max(1, primero.stats.ataque - segundo.stats.defensa)
-        vidaSegundo -= danio
-        log.push(`Ronda ${ronda}a: ${primero.nombre} → ${segundo.nombre} [-${danio} vida] (${Math.max(0, vidaSegundo)} restante)`)
-      }
+  const fallo = Math.random() < 0.1
+  if (fallo) {
+    log.push(`Ronda ${ronda}a: ${primero.nombre} falla el ataque`)
+  } else {
+    const critico = Math.random() < 0.15
+    const base = Math.max(1, primero.stats.ataque - Math.max(0, segundo.stats.defensa))
+    const danio = base + (critico ? Math.max(1, Math.floor(10 / Math.sqrt(base))) : 0)
+    vidaSegundo -= danio
+    log.push(`Ronda ${ronda}a: ${primero.nombre} → ${segundo.nombre} [-${danio} vida]${critico ? ' 💥 CRÍTICO' : ''} (${Math.max(0, vidaSegundo)} restante)`)
+  }
+}
+
 
       if (vidaSegundo <= 0) break
 
@@ -61,10 +77,18 @@ class Combate {
       if (usarHabilidad && primero.categoria === 'explorador') {
         log.push(`Ronda ${ronda}b: ${segundo.nombre} falla — ${primero.nombre} esquivó`)
       } else if (usarHabilidad) {
-        const hab = segundo.habilidadEspecial(vidaPrimero)
+        const hab = segundo.habilidadEspecial(vidaPrimero, vidaSegundo)
         log.push(`✨ ${hab.descripcion}`)
 
-        if (hab.esquiva) {
+        if (hab.curacion) {
+          const critico = Math.random() < 0.40
+          const danioFinal = critico ? hab.danio * 2 : hab.danio
+          const curacionFinal = critico ? hab.curacion * 2 : hab.curacion
+          vidaPrimero -= danioFinal
+          vidaSegundo = Math.min(segundo.stats.vida, vidaSegundo + curacionFinal)
+          log.push(`Ronda ${ronda}b: ${segundo.nombre} → ${primero.nombre} [-${danioFinal} vida]${critico ? ' 💥 CRÍTICO' : ''} (${Math.max(0, vidaPrimero)} restante)`)
+          log.push(`Ronda ${ronda}b: ${segundo.nombre} recupera [+${curacionFinal} vida] (${vidaSegundo} restante)`)
+        } else if (hab.esquiva) {
           vidaPrimero -= hab.danio
           log.push(`Ronda ${ronda}b: ${segundo.nombre} → ${primero.nombre} [-${hab.danio} vida] (${Math.max(0, vidaPrimero)} restante)`)
         } else if (hab.ignoraDefensa) {
@@ -75,11 +99,19 @@ class Combate {
           vidaSegundo -= hab.costePropio
           log.push(`Ronda ${ronda}b: ${segundo.nombre} → ${primero.nombre} [-${hab.danio} vida] (${Math.max(0, vidaPrimero)} restante) — coste propio: -${hab.costePropio}`)
         }
-      } else {
-        const danio = Math.max(1, segundo.stats.ataque - primero.stats.defensa)
-        vidaPrimero -= danio
-        log.push(`Ronda ${ronda}b: ${segundo.nombre} → ${primero.nombre} [-${danio} vida] (${Math.max(0, vidaPrimero)} restante)`)
-      }
+        } else {
+          const fallo = Math.random() < 0.1
+          if (fallo) {
+            log.push(`Ronda ${ronda}b: ${segundo.nombre} falla el ataque`)
+          } else {
+            const critico = Math.random() < 0.15
+            const base = Math.max(1, segundo.stats.ataque - Math.max(0, primero.stats.defensa))
+            const danio = base + (critico ? Math.max(1, Math.floor(10 / Math.sqrt(base))) : 0)
+            vidaPrimero -= danio
+            log.push(`Ronda ${ronda}b: ${segundo.nombre} → ${primero.nombre} [-${danio} vida]${critico ? ' 💥 CRÍTICO' : ''} (${Math.max(0, vidaPrimero)} restante)`)
+          }
+        }
+
     }
 
     const ganador  = vidaPrimero > 0 ? primero : segundo
