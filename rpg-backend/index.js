@@ -6,8 +6,8 @@ const logger = require("./src/middleware/logger");
 const errorHandler = require("./src/middleware/errorHandler");
 
 // Importar routers
-const personajeRouter = require("./src/routes/personaje");
-const combateRouter = require("./src/routes/combate");
+const personajeRouter = require("./src/routes/personajes");
+const combateRouter = require("./src/routes/combates");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,8 +23,8 @@ app.use(express.static(path.join(__dirname, "client")));
 app.use(logger);
 
 // ==================== ROUTERS ====================
-app.use("/api/personajes", personajeRouter);
-app.use("/api/combates", combateRouter);
+app.use("/personajes", personajeRouter);
+app.use("/combates", combateRouter);
 
 // Ruta de bienvenida
 app.get("/", (req, res) => {
@@ -32,8 +32,8 @@ app.get("/", (req, res) => {
     mensaje: "🎮 Chronicles of Iron — RPG Backend API",
     version: "1.0.0",
     endpoints: {
-      personajes: "/api/personajes",
-      combates: "/api/combates",
+      personajes: "/personajes",
+      combates: "/combates",
     },
   });
 });
